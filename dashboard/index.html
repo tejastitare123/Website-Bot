@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TrendSearch Pro</title>
+<style>
+  body { font-family: system-ui, Arial, sans-serif; max-width: 440px; margin: 20px auto;
+         background: #0f172a; color: #fff; padding: 16px; }
+  .card { background: #020617; padding: 14px; border-radius: 10px; margin-bottom: 12px;
+          border: 1px solid #1e293b; }
+  h2 { text-align: center; margin: 4px 0 16px; font-size: 18px; }
+  .row { display: flex; justify-content: space-between; align-items: center;
+         font-size: 13px; margin: 6px 0; }
+  .switch-row { display: flex; justify-content: space-between; align-items: center;
+                margin: 10px 0; font-size: 13px; }
+  .switch { position: relative; width: 40px; height: 22px; flex-shrink: 0; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider { position: absolute; inset: 0; background: #334155; border-radius: 22px;
+            cursor: pointer; transition: .2s; }
+  .slider:before { content: ""; position: absolute; height: 16px; width: 16px;
+                   left: 3px; bottom: 3px; background: white; border-radius: 50%;
+                   transition: .2s; }
+  input:checked + .slider { background: #22c55e; }
+  input:checked + .slider:before { transform: translateX(18px); }
+  select, input[type=text] { width: 100%; padding: 8px; border-radius: 6px;
+                              background: #1e293b; color: white; border: 1px solid #334155;
+                              box-sizing: border-box; margin-top: 4px; font-size: 12px; }
+  label.lbl { font-size: 12px; color: #94a3b8; display: block; margin-top: 10px; }
+  button { width: 100%; padding: 12px; border: none; border-radius: 8px;
+           margin-top: 8px; cursor: pointer; font-weight: bold; font-size: 14px; }
+  #startBtn { background: linear-gradient(135deg, #8b5cf6, #6366f1); color: white; }
+  #stopBtn { background: #ef4444; color: white; }
+  #activateBtn { background: #22c55e; color: white; }
+  #installBtn { background: #f59e0b; color: black; display: block;
+                text-decoration: none; text-align: center; }
+  #startBtn:disabled, #stopBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+  #msg { text-align: center; margin-top: 10px; font-size: 12px;
+         color: #38bdf8; min-height: 16px; }
+  #connBanner { text-align: center; padding: 8px; border-radius: 6px;
+                margin-bottom: 12px; font-size: 12px; }
+  .conn-ok { background: #14532d; color: #86efac; }
+  .conn-bad { background: #7f1d1d; color: #fecaca; }
+  .progress-bg { width: 100%; height: 8px; background: #1e293b; border-radius: 4px;
+                 overflow: hidden; margin-top: 6px; }
+  .progress-fill { height: 100%; width: 0%;
+                   background: linear-gradient(90deg, #3b82f6, #2563eb);
+                   transition: width .3s; }
+  .hide { display: none !important; }
+  .tag { background: #1e293b; padding: 2px 6px; border-radius: 4px;
+         font-size: 10px; color: #94a3b8; margin-left: 6px; }
+  .pct-badge { background: #2563eb; padding: 2px 8px; border-radius: 10px;
+               font-size: 11px; font-weight: bold; }
+</style>
+</head>
+<body>
+
+<h2>🚀 TrendSearch Pro</h2>
+<div id="connBanner" class="conn-bad">🔌 Bot check ho raha hai...</div>
+
+<!-- Install button (shown if bot missing) -->
+<div id="installView" class="card hide">
+  <p style="font-size:13px;color:#94a3b8;margin:0 0 8px;">
+    Pehle Tampermonkey install karo, phir bot install karo.
+  </p>
+  <a href="https://tampermonkey.net/" target="_blank" class="act-btn"
+     style="display:block;background:#22c55e;color:white;text-align:center;
+     padding:10px;border-radius:6px;text-decoration:none;margin-bottom:8px;
+     font-weight:bold;">1️⃣ Install Tampermonkey</a>
+  <a href="/bot.user.js" id="installBtn">2️⃣ 🚀 Install Bot</a>
+</div>
+
+<!-- Activation -->
+<div id="activationView" class="card hide">
+  <label class="lbl">License Key</label>
+  <input type="text" id="licenseInput" placeholder="BEAST-VIP-XXXX">
+  <button id="activateBtn">🔐 Activate</button>
+</div>
+
+<!-- Main control -->
+<div id="mainView" class="hide">
+
+  <div class="card">
+    <div class="row"><span>Status:</span><b id="botStatus">Stopped</b></div>
+    <div class="row"><span>Task:</span><b id="taskLabel">-</b></div>
+    <div class="row">
+      <span>Progress:</span>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <b id="botProgress">-</b>
+        <span id="pctBadge" class="pct-badge">0%</span>
+      </div>
+    </div>
+    <div class="progress-bg"><div id="progressFill" class="progress-fill"></div></div>
+  </div>
+
+  <div class="card">
+    <div style="font-size:11px;color:#64748b;margin-bottom:8px;
+                text-transform:uppercase;letter-spacing:0.5px;">Task Selection</div>
+
+    <div class="switch-row">
+      <span>📖 Read-to-Earn <span class="tag">API</span></span>
+      <label class="switch"><input type="checkbox" id="tRead" checked><span class="slider"></span></label>
+    </div>
+    <div class="switch-row">
+      <span>📱 App Check-In <span class="tag">API</span></span>
+      <label class="switch"><input type="checkbox" id="tCheckin" checked><span class="slider"></span></label>
+    </div>
+    <div class="switch-row">
+      <span>🎉 Monthly & Streak Claim</span>
+      <label class="switch"><input type="checkbox" id="tClaim" checked><span class="slider"></span></label>
+    </div>
+    <div class="switch-row">
+      <span>🎯 Dashboard Tasks</span>
+      <label class="switch"><input type="checkbox" id="tDash" checked><span class="slider"></span></label>
+    </div>
+    <div class="switch-row">
+      <span>🎁 Earn Page Tasks</span>
+      <label class="switch"><input type="checkbox" id="tEarn" checked><span class="slider"></span></label>
+    </div>
+    <div class="switch-row">
+      <span>🎪 Flyout Quiz Bonus</span>
+      <label class="switch"><input type="checkbox" id="tFly" checked><span class="slider"></span></label>
+    </div>
+    <div class="switch-row">
+      <span>🔍 Bing Searches</span>
+      <label class="switch"><input type="checkbox" id="tSearch" checked><span class="slider"></span></label>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="font-size:11px;color:#64748b;margin-bottom:8px;
+                text-transform:uppercase;letter-spacing:0.5px;">Settings</div>
+
+    <label class="lbl">Total Searches</label>
+    <select id="maxSearch">
+      <option value="1">1 Search</option>
+      <option value="5">5 Searches</option>
+      <option value="10">10 Searches</option>
+      <option value="15">15 Searches</option>
+      <option value="20" selected>20 Searches (Default)</option>
+      <option value="25">25 Searches</option>
+      <option value="30">30 Searches</option>
+      <option value="40">40 Searches (Max)</option>
+    </select>
+
+    <label class="lbl">Search Gap (Delay)</label>
+    <select id="delaySelect">
+      <option value="5-10">5 - 10 sec</option>
+      <option value="10-15">10 - 15 sec</option>
+      <option value="10-20" selected>10 - 20 sec (Default)</option>
+      <option value="15-20">15 - 20 sec</option>
+      <option value="20-30">20 - 30 sec</option>
+    </select>
+
+    <label class="lbl">Search Mode</label>
+    <select id="modeSelect">
+      <option value="desktop">Desktop</option>
+      <option value="mobile">Mobile</option>
+    </select>
+  </div>
+
+  <button id="startBtn">⚡ Start Selected Tasks</button>
+  <button id="stopBtn" disabled>🛑 Stop</button>
+</div>
+
+<div id="msg"></div>
+<script src="app.js"></script>
+</body>
+</html>
